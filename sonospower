@@ -60,8 +60,10 @@ def main():
     lastclick = None
     sonos = soco.discovery.any_soco()
     paths = PowerMate.enumerate()
-    if not paths or not sonos:
-        logger.error('No PowerMates / Sonos speakers detected')
+    if not paths:
+        logger.error('No PowerMates detected')
+    elif not sonos:
+        logger.error('No Sonos speakers detected')
     else:
         powermate = PowerMate(
             paths[0],

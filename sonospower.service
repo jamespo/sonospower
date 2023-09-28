@@ -1,0 +1,10 @@
+[Unit]
+Description=sonospower
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sonospower
+
+[Install]
+WantedBy=multi-user.target
