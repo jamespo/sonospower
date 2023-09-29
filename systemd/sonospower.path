@@ -1,0 +1,9 @@
+[Unit]
+Description="Powermate Device Path"
+
+[Path]
+PathExists=/dev/powermate
+Unit=sonospower.service
+
+[Install]
+WantedBy=default.target
