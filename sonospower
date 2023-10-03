@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import logging
 import os
 import soco
@@ -12,25 +13,40 @@ console_handler = logging.StreamHandler()
 logger.addHandler(console_handler)
 
 
-def set_light_on_volume():
-    powermate.set_led_solid(int(sonos.volume * 0.392))
+def getargs():
+    '''get CLI args'''
+    parser = argparse.ArgumentParser(description='Control Sonos speaker')
+    parser.add_argument('--lightratio', default=2.0, type=float,
+                        help='how much to increase light per percent of volume')
+    parser.add_argument('--dcdelta', default=1.5, type=float,
+                        help='how many secs 2 clicks = doubleclick')
+    return parser.parse_args()
+
+
+def set_light_on_volume(lightratio):
+    """increase brightness per unit of volume"""
+    # maximum brightness = 255, maximum volume = 100
+    # 0.392 would map but very loud for full brightness!
+    powermate.set_led_solid(min(255, int(sonos.volume * lightratio)))
 
 
 def on_turn(amount):
     '''wheel turned'''
     logger.debug(f'Turned: {amount}')
+    global args
     sonos.volume += amount
-    set_light_on_volume()
+    set_light_on_volume(args.lightratio)
 
 
-def on_button(pressed, doubleclick_delta=2.0):
+def on_button(pressed):
     '''powermate button pressed or released'''
-    global lastclick
+    global lastclick, args
     thisclick = time.time()
     if pressed:
         logger.debug(
-            f'Button pressed - lastclick: {lastclick} - thisclick: {thisclick}')
-        if (lastclick is None) or (thisclick - lastclick > doubleclick_delta):
+            f'Button pressed - lastclick: {lastclick} - thisclick: {thisclick}'
+            f' - volume: {sonos.volume}')
+        if (lastclick is None) or (thisclick - lastclick > args.dcdelta):
             # single click
             status = sonos.get_current_transport_info()
             if status['current_transport_state'] == 'PLAYING':
@@ -56,7 +72,8 @@ def main():
         logger.debug('DEBUG enabled')
     else:
         logger.setLevel(logging.INFO)
-    global sonos, powermate, lastclick
+    global sonos, powermate, lastclick, args
+    args = getargs()
     lastclick = None
     sonos = soco.discovery.any_soco()
     paths = PowerMate.enumerate()
